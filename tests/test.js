@@ -1,2 +1,5 @@
-console.log("teste do log")
-print("teste do print");
+function loop() {
+  SetWindowSize(800, 450) 
+  DrawText("Text inside js")
+}
+
