@@ -1,7 +1,6 @@
 function setup(){
   SetWindowSize(800, 450)
   SetWindowTitle("Test 1 - JS")
-  SetTargetFPS(30)
 }
 
 function loop() {

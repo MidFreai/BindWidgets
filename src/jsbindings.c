@@ -10,8 +10,40 @@
 #define JSBDEF static inline
 #endif
 
+//raylib typecast
+JSBDEF Color js_tocolor(js_State *J, int i);
 
-//original fn
+//raylib bindings
+JSBDEF void jsB_InitWindow(js_State *J);
+JSBDEF void jsB_ClearBackground(js_State *J);
+JSBDEF void jsB_DrawText(js_State *J);
+JSBDEF void jsB_SetWindowSize(js_State *J);
+JSBDEF void jsB_SetWindowTitle(js_State *J);
+JSBDEF void jsB_SetTargetFPS(js_State *J);
+
+//TODO: Custom wait screen
+
+//if setup is not defined this be replaced
+static const char *setup =
+  "function setup(){\n"
+  "SetWindowTitle('BindWidgets')\n"
+  "}\n"
+;
+
+//if loop is not defined this be replaced
+static const char *loop =
+  "function loop(){\n"
+  "ClearBackground({r: 0, g: 0, b: 0, a: 255 })\n"
+  "DrawText('No file', 200, 100, 30)\n"
+  "}\n"
+;
+
+//
+static const char *end =
+  "function end(){}"
+;
+
+//original bindings
 JSBDEF void jsB_gc(js_State *J);
 JSBDEF void jsB_load(js_State *J);
 JSBDEF void jsB_compile(js_State *J);
@@ -48,6 +80,30 @@ static const char *console_js =
 #ifdef JSB_IMPLEMENTATION
 
 JSBDEF void jsB_initbindings(js_State *J){
+  //raylib bindings
+  js_newcfunction(J, jsB_InitWindow, "InitWindow", 3);
+  js_setglobal(J, "InitWindow");
+
+  js_newcfunction(J, jsB_ClearBackground, "ClearBackground", 1);
+  js_setglobal(J, "ClearBackground");
+
+  js_newcfunction(J, jsB_SetWindowSize, "SetWindowSize", 2);
+  js_setglobal(J, "SetWindowSize");
+
+  js_newcfunction(J, jsB_SetWindowTitle, "SetWindowTitle", 1);
+  js_setglobal(J, "SetWindowTitle");
+
+  js_newcfunction(J, jsB_SetTargetFPS, "SetTargetFPS", 1);
+  js_setglobal(J, "SetTargetFPS");
+
+  js_newcfunction(J, jsB_DrawText, "DrawText", 4);
+  js_setglobal(J, "DrawText");
+
+  js_dostring(J, setup);
+  js_dostring(J, loop);
+  js_dostring(J, end);
+
+  //original bindings
   js_newcfunction(J, jsB_gc, "gc", 0);
 	js_setglobal(J, "gc");
 
@@ -80,6 +136,56 @@ JSBDEF void jsB_initbindings(js_State *J){
 	js_dostring(J, console_js);
 }
 
+JSBDEF Color js_tocolor(js_State *J, int i){
+  Color res = {0};
+  int obj = i++;
+  js_getproperty(J, obj, "r");
+  res.r = js_tointeger(J, i++);
+  js_getproperty(J, obj, "g");
+  res.g = js_tointeger(J, i++);
+  js_getproperty(J, obj, "b");
+  res.b = js_tointeger(J, i++);
+  js_getproperty(J, obj, "a");
+  res.a = js_tointeger(J, i++);
+
+  js_pop(J, 4);
+  return res;
+}
+
+JSBDEF void jsB_InitWindow(js_State *J){
+  int i = 1;
+  int width = js_tointeger(J, i++);
+  int height = js_tointeger(J, i++);
+  const char *title = js_tostring(J, i++);
+  InitWindow(width, height, title);
+}
+
+JSBDEF void jsB_ClearBackground(js_State *J){
+  ClearBackground(js_tocolor(J, 1));
+}
+
+JSBDEF void jsB_SetWindowSize(js_State *J){
+  SetWindowSize(js_tointeger(J, 1), js_tointeger(J, 2));
+}
+
+JSBDEF void jsB_SetWindowTitle(js_State *J){
+  SetWindowTitle(js_tostring(J, 1));
+}
+
+JSBDEF void jsB_SetTargetFPS(js_State *J){
+  SetTargetFPS(js_tointeger(J, 1));
+}
+
+JSBDEF void jsB_DrawText(js_State *J){
+  int i = 1;
+  const char *text = js_tostring(J, i++);
+  int posX = js_tointeger(J, i++);
+  int posY = js_tointeger(J, i++);
+  int fontSize = js_tointeger(J, i++);
+  DrawText(text, posX, posY, fontSize, LIGHTGRAY);
+}
+
+//original bindings
 JSBDEF void jsB_gc(js_State *J){
 	int report = js_toboolean(J, 1);
 	js_gc(J, report);
