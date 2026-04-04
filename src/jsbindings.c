@@ -7,19 +7,46 @@
 #include <string.h>
 
 #ifndef JSBDEF
-#define JSBDEF static inline
+#define JSBDEF static
 #endif
 
 //raylib typecast
 JSBDEF Color js_tocolor(js_State *J, int i);
 
 //raylib bindings
+
 JSBDEF void jsB_InitWindow(js_State *J);
+JSBDEF void jsB_SetWindowSize(js_State *J);
+JSBDEF void jsB_GetScreenWidth(js_State *J);
+JSBDEF void jsB_GetScreenHeight(js_State *J);
+JSBDEF void jsB_SetWindowTitle(js_State *J);
+JSBDEF void jsB_IsWindowFullscreen(js_State *J);
+
 JSBDEF void jsB_ClearBackground(js_State *J);
 JSBDEF void jsB_DrawText(js_State *J);
-JSBDEF void jsB_SetWindowSize(js_State *J);
-JSBDEF void jsB_SetWindowTitle(js_State *J);
+
+//Timing-related functions
 JSBDEF void jsB_SetTargetFPS(js_State *J);
+JSBDEF void jsB_GetFrameTime(js_State *J);
+JSBDEF void jsB_GetTime(js_State *J);
+JSBDEF void jsB_GetFps(js_State *J);
+
+JSBDEF void jsB_IsKeyPressed(js_State *J);
+
+JSBDEF void jsB_GetKeyPressed(js_State *J);
+
+//RSHAPES
+JSBDEF void jsB_DrawLine(js_State *J);
+JSBDEF void jsB_DrawRectangle(js_State *J); // Draw a color-filled rectangle
+
+static const char *window =
+  "var Window = {\n"
+  "size: SetWindowSize, title: SetWindowTitle, \n"
+  "width: GetScreenWidth, height: GetScreenHeight \n"
+  "}\n"
+;
+
+static const char *keyboardKey; //list of keys
 
 //TODO: Custom wait screen
 
@@ -34,7 +61,7 @@ static const char *setup =
 static const char *loop =
   "function loop(){\n"
   "ClearBackground({r: 0, g: 0, b: 0, a: 255 })\n"
-  "DrawText('No file', 200, 100, 30)\n"
+  "DrawText('No file provided', 275, 200, 30)\n"
   "}\n"
 ;
 
@@ -79,29 +106,49 @@ static const char *console_js =
 
 #ifdef JSB_IMPLEMENTATION
 
+JSBDEF void js_newcsetglobal(js_State *J, void *func, char *nome, int args){
+  js_newcfunction(J, func, nome, args);
+  js_setglobal(J, nome);
+}
+
 JSBDEF void jsB_initbindings(js_State *J){
   //raylib bindings
-  js_newcfunction(J, jsB_InitWindow, "InitWindow", 3);
-  js_setglobal(J, "InitWindow");
+  js_newcsetglobal(J, jsB_InitWindow, "InitWindow", 3);
 
-  js_newcfunction(J, jsB_ClearBackground, "ClearBackground", 1);
-  js_setglobal(J, "ClearBackground");
+  js_newcsetglobal(J, jsB_SetWindowSize, "SetWindowSize", 2);
 
-  js_newcfunction(J, jsB_SetWindowSize, "SetWindowSize", 2);
-  js_setglobal(J, "SetWindowSize");
+  js_newcsetglobal(J, jsB_GetScreenWidth, "GetScreenWidth", 0);
 
-  js_newcfunction(J, jsB_SetWindowTitle, "SetWindowTitle", 1);
-  js_setglobal(J, "SetWindowTitle");
+  js_newcsetglobal(J, jsB_GetScreenHeight, "GetScreenHeight", 0);
 
-  js_newcfunction(J, jsB_SetTargetFPS, "SetTargetFPS", 1);
-  js_setglobal(J, "SetTargetFPS");
+  js_newcsetglobal(J, jsB_SetWindowTitle, "SetWindowTitle", 1);
 
-  js_newcfunction(J, jsB_DrawText, "DrawText", 4);
-  js_setglobal(J, "DrawText");
+  js_newcsetglobal(J, jsB_IsWindowFullscreen, "IsWindowFullscreen", 0);
+
+  js_newcsetglobal(J, jsB_ClearBackground, "ClearBackground", 1);
+
+  js_newcsetglobal(J, jsB_DrawText, "DrawText", 4);
+
+  js_newcsetglobal(J, jsB_SetTargetFPS, "SetTargetFPS", 1);
+
+  js_newcsetglobal(J, jsB_GetFrameTime, "GetFrameTime", 0);
+
+  js_newcsetglobal(J, jsB_GetTime, "GetTime", 0);
+
+  js_newcsetglobal(J, jsB_GetFps, "GetFPS", 0);
+
+  js_newcsetglobal(J, jsB_IsKeyPressed, "IsKeyPressed", 1);
+
+  js_newcsetglobal(J, jsB_GetKeyPressed, "GetKeyPressed", 0);
+
+  js_newcsetglobal(J, jsB_DrawLine, "DrawLine", 5);
+  js_newcsetglobal(J, jsB_DrawRectangle, "DrawRectangle", 5);
 
   js_dostring(J, setup);
   js_dostring(J, loop);
   js_dostring(J, end);
+  js_dostring(J, window);
+  js_dostring(J, keyboardKey);
 
   //original bindings
   js_newcfunction(J, jsB_gc, "gc", 0);
@@ -168,12 +215,70 @@ JSBDEF void jsB_SetWindowSize(js_State *J){
   SetWindowSize(js_tointeger(J, 1), js_tointeger(J, 2));
 }
 
+JSBDEF void jsB_GetScreenWidth(js_State *J){
+  js_pushnumber(J, GetScreenWidth());
+}
+JSBDEF void jsB_GetScreenHeight(js_State *J){
+  js_pushnumber(J, GetScreenHeight());
+}
+
 JSBDEF void jsB_SetWindowTitle(js_State *J){
   SetWindowTitle(js_tostring(J, 1));
 }
 
+JSBDEF void jsB_IsWindowFullscreen(js_State *J){
+  js_pushboolean(J, IsWindowFullscreen());
+}
+
+//Timing-related functions
 JSBDEF void jsB_SetTargetFPS(js_State *J){
   SetTargetFPS(js_tointeger(J, 1));
+}
+
+JSBDEF void jsB_GetFrameTime(js_State *J){
+  js_pushnumber(J, GetFrameTime());
+}
+
+JSBDEF void jsB_GetTime(js_State *J){
+  js_pushnumber(J, GetTime());
+}
+
+JSBDEF void jsB_GetFps(js_State *J){
+  js_pushnumber(J, GetFPS());
+}
+
+// Input-related functions: keyboard
+
+JSBDEF void jsB_IsKeyPressed(js_State *J){
+  js_pushboolean(J, IsKeyPressed(js_tointeger(J, 1)));
+}
+
+JSBDEF void jsB_GetKeyPressed(js_State *J){
+  js_pushnumber(J, GetKeyPressed());
+}
+    bool IsKeyPressedRepeat(int key);                       // Check if a key has been pressed again
+    bool IsKeyDown(int key);                                // Check if a key is being pressed
+    bool IsKeyReleased(int key);                            // Check if a key has been released once
+    bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
+        int GetCharPressed(void);                               // Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
+    void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
+
+JSBDEF void jsB_DrawLine(js_State *J){
+  int i = 1;
+  Vector2 start = {x: js_tointeger(J, i++), y: js_tointeger(J, i++)};
+  Vector2 end = {x: js_tointeger(J, i++), y: js_tointeger(J, i++)};
+  Color color = js_tocolor(J, i++);
+
+  DrawLine(start.x, start.y, end.x, end.y, color);                // Draw a line
+}
+
+JSBDEF void jsB_DrawRectangle(js_State *J){
+  int i = 1;
+  Vector2 pos = {x: js_tointeger(J, i++), y: js_tointeger(J, i++)};
+  int width = js_tointeger(J, i++);
+  int height = js_tointeger(J, i++);
+  Color color = js_tocolor(J, i++);
+  DrawRectangle(pos.x, pos.y, width, height, color);                        // Draw a color-filled rectangle
 }
 
 JSBDEF void jsB_DrawText(js_State *J){
@@ -184,6 +289,100 @@ JSBDEF void jsB_DrawText(js_State *J){
   int fontSize = js_tointeger(J, i++);
   DrawText(text, posX, posY, fontSize, LIGHTGRAY);
 }
+
+static const char *keyboardKey =
+  "var Keyboard = {\n"
+  "KEY_NULL            : 0, \n"       // Key: NULL, used for no key pressed
+  "KEY_APOSTROPHE      : 39,\n"       // Key: '
+  "KEY_COMMA           : 44,\n"       // Key: ,
+  "KEY_MINUS           : 45,\n"       // Key: -
+  "KEY_PERIOD          : 46,\n"       // Key: .
+  "KEY_SLASH           : 47,\n"       // Key: /
+  "KEY_ZERO            : 48,\n"       // Key: 0
+  "KEY_ONE             : 49,\n"       // Key: 1
+  "KEY_TWO             : 50,\n"       // Key: 2
+  "KEY_THREE           : 51,\n"       // Key: 3
+  "KEY_FOUR            : 52,\n"       // Key: 4
+  "KEY_FIVE            : 53,\n"       // Key: 5
+  "KEY_SIX             : 54,\n"       // Key: 6
+  "KEY_SEVEN           : 55,\n"       // Key: 7
+  "KEY_EIGHT           : 56,\n"       // Key: 8
+  "KEY_NINE            : 57,\n"       // Key: 9
+  "KEY_SEMICOLON       : 59,\n"       // Key: ;
+  "KEY_EQUAL           : 61,\n"       // Key: =
+  "KEY_A               : 65,\n"       // Key: A | a
+  "KEY_B               : 66,\n"       // Key: B | b
+  "KEY_C               : 67,\n"       // Key: C | c
+  "KEY_D               : 68,\n"       // Key: D | d
+  "KEY_E               : 69,\n"       // Key: E | e
+  "KEY_F               : 70,\n"       // Key: F | f
+  "KEY_G               : 71,\n"       // Key: G | g
+  "KEY_H               : 72,\n"       // Key: H | h
+  "KEY_I               : 73,\n"       // Key: I | i
+  "KEY_J               : 74,\n"       // Key: J | j
+  "KEY_K               : 75,\n"       // Key: K | k
+  "KEY_L               : 76,\n"       // Key: L | l
+  "KEY_M               : 77,\n"       // Key: M | m
+  "KEY_N               : 78,\n"       // Key: N | n
+  "KEY_O               : 79,\n"       // Key: O | o
+  "KEY_P               : 80,\n"       // Key: P | p
+  "KEY_Q               : 81,\n"       // Key: Q | q
+  "KEY_R               : 82,\n"       // Key: R | r
+  "KEY_S               : 83,\n"       // Key: S | s
+  "KEY_T               : 84,\n"       // Key: T | t
+  "KEY_U               : 85,\n"       // Key: U | u
+  "KEY_V               : 86,\n"       // Key: V | v
+  "KEY_W               : 87,\n"       // Key: W | w
+  "KEY_X               : 88,\n"       // Key: X | x
+  "KEY_Y               : 89,\n"       // Key: Y | y
+  "KEY_Z               : 90,\n"       // Key: Z | z
+  "KEY_LEFT_BRACKET    : 91,\n"       // Key: [
+  "KEY_BACKSLASH       : 92,\n"       // Key: '\'
+  "KEY_RIGHT_BRACKET   : 93,\n"       // Key: ]
+  "KEY_GRAVE           : 96,\n"        // Key: `
+  "KEY_SPACE           : 32,\n"       // Key: Space
+  "KEY_ESCAPE          : 256,\n"      // Key: Esc
+  "KEY_ENTER           : 257,\n"      // Key: Enter
+  "KEY_TAB             : 258,\n"      // Key: Tab
+  "KEY_BACKSPACE       : 259,\n"      // Key: Backspace
+  "KEY_INSERT          : 260,\n"      // Key: Ins
+  "KEY_DELETE          : 261,\n"      // Key: Del
+  "KEY_RIGHT           : 262,\n"      // Key: Cursor right
+  "KEY_LEFT            : 263,\n"      // Key: Cursor left
+  "KEY_DOWN            : 264,\n"      // Key: Cursor down
+  "KEY_UP              : 265,\n"      // Key: Cursor up
+  "KEY_PAGE_UP         : 266,\n"      // Key: Page up
+  "KEY_PAGE_DOWN       : 267,\n"      // Key: Page down
+  "KEY_HOME            : 268,\n"      // Key: Home
+  "KEY_END             : 269,\n"      // Key: End
+  "KEY_CAPS_LOCK       : 280,\n"      // Key: Caps lock
+  "KEY_SCROLL_LOCK     : 281,\n"      // Key: Scroll down
+  "KEY_NUM_LOCK        : 282,\n"      // Key: Num lock
+  "KEY_PRINT_SCREEN    : 283,\n"      // Key: Print screen
+  "KEY_PAUSE           : 284,\n"      // Key: Pause
+  "KEY_F1              : 290,\n"      // Key: F1
+  "KEY_F2              : 291,\n"      // Key: F2
+  "KEY_F3              : 292,\n"      // Key: F3
+  "KEY_F4              : 293,\n"      // Key: F4
+  "KEY_F5              : 294,\n"      // Key: F5
+  "KEY_F6              : 295,\n"      // Key: F6
+  "KEY_F7              : 296,\n"      // Key: F7
+  "KEY_F8              : 297,\n"      // Key: F8
+  "KEY_F9              : 298,\n"      // Key: F9
+  "KEY_F10             : 299,\n"      // Key: F10
+  "KEY_F11             : 300,\n"      // Key: F11
+  "KEY_F12             : 301,\n"      // Key: F12
+  "KEY_LEFT_SHIFT      : 340,\n"      // Key: Shift left
+  "KEY_LEFT_CONTROL    : 341,\n"      // Key: Control left
+  "KEY_LEFT_ALT        : 342,\n"      // Key: Alt left
+  "KEY_LEFT_SUPER      : 343,\n"      // Key: Super left
+  "KEY_RIGHT_SHIFT     : 344,\n"      // Key: Shift right
+  "KEY_RIGHT_CONTROL   : 345,\n"      // Key: Control right
+  "KEY_RIGHT_ALT       : 346,\n"      // Key: Alt right
+  "KEY_RIGHT_SUPER     : 347,\n"      // Key: Super right
+  "KEY_KB_MENU         : 348,\n"      // Key: KB menu
+  "}\n"
+;
 
 //original bindings
 JSBDEF void jsB_gc(js_State *J){

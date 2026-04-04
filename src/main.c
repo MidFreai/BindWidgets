@@ -14,8 +14,15 @@ int main(int argc, char **argv){
 
   InitWindow(800, 450, "Raylib - JS");
 
+  if(!IsWindowReady){
+    printf("[ERROR] Window not been initialized successfully\n");
+    return 1;
+  }
+
   if (argc > 1){
     js_dofile(J, argv[1]);
+  }else{
+    printf("[INFO] No file provided\n");
   }
 
   js_dostring(J, "setup();");

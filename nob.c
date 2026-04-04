@@ -15,7 +15,7 @@ int main(int argc, char **argv){
 
   nob_cmd_append(&cmd, "cc");
   nob_cmd_append(&cmd, "-I"MUJS_FOLDER, "-I"RAYLIB_FOLDER"include/");
-  nob_cmd_append(&cmd, "-o", BUILD_FOLDER"main");
+  nob_cmd_append(&cmd, "-o", BUILD_FOLDER"bwidgets");
   nob_cmd_append(&cmd, MUJS_FOLDER"one.c", SRC_FOLDER"main.c");
   nob_cmd_append(&cmd, "-L"RAYLIB_FOLDER"lib/");
   nob_cmd_append(&cmd, "-l:libraylib.a");
