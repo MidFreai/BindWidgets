@@ -1,7 +1,7 @@
 # BindWidgets
 
 Using JS to create UI in raylib using MUjs interpreter
-Inspired by [Lust2d](https://github.com/tsoding/lust2d).
+> Inspired by [Lust2d](https://github.com/tsoding/lust2d).
 
 # Compile
 
