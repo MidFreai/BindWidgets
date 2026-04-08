@@ -10,12 +10,15 @@
 #define JSBDEF static
 #endif
 
+//
+JSBDEF void jsB_initbindings(js_State *J);
+
 //raylib typecast
 JSBDEF Color js_tocolor(js_State *J, int i);
 
 //raylib bindings
 
-JSBDEF void jsB_InitWindow(js_State *J);
+//JSBDEF void jsB_InitWindow(js_State *J);
 JSBDEF void jsB_SetWindowSize(js_State *J);
 JSBDEF void jsB_GetScreenWidth(js_State *J);
 JSBDEF void jsB_GetScreenHeight(js_State *J);
@@ -32,8 +35,10 @@ JSBDEF void jsB_GetTime(js_State *J);
 JSBDEF void jsB_GetFps(js_State *J);
 
 JSBDEF void jsB_IsKeyPressed(js_State *J);
-
+JSBDEF void jsB_IsKeyDown(js_State *J);
 JSBDEF void jsB_GetKeyPressed(js_State *J);
+JSBDEF void jsB_IsKeyReleased(js_State *J);
+JSBDEF void jsB_SetExitKey(js_State *J);
 
 //RSHAPES
 JSBDEF void jsB_DrawLine(js_State *J);
@@ -60,7 +65,7 @@ static const char *setup =
 //if loop is not defined this be replaced
 static const char *loop =
   "function loop(){\n"
-  "ClearBackground({r: 0, g: 0, b: 0, a: 255 })\n"
+  "ClearBackground({a: 255 })\n"
   "DrawText('No file provided', 275, 200, 30)\n"
   "}\n"
 ;
@@ -80,27 +85,12 @@ JSBDEF void jsB_read(js_State *J);
 JSBDEF void jsB_readline(js_State *J);
 JSBDEF void jsB_quit(js_State *J);
 JSBDEF void jsB_repr(js_State *J);
-JSBDEF int eval_print(js_State *J, const char *source);
 
-static const char *require_js =
-	"function require(name) {\n"
-	"var cache = require.cache;\n"
-	"if (name in cache) return cache[name];\n"
-	"var exports = {};\n"
-	"cache[name] = exports;\n"
-	"Function('exports', read(name+'.js'))(exports);\n"
-	"return exports;\n"
-	"}\n"
-	"require.cache = Object.create(null);\n"
-;
+static const char *require_js;
 
-static const char *stacktrace_js =
-	"Error.prototype.toString = function() { return this.stack }\n"
-;
+static const char *stacktrace_js;
 
-static const char *console_js =
-	"var console = { log: print, debug: print, warn: print, error: print };"
-;
+static const char *console_js;
 
 #endif /* !JSB_H */
 
@@ -113,16 +103,11 @@ JSBDEF void js_newcsetglobal(js_State *J, void *func, char *nome, int args){
 
 JSBDEF void jsB_initbindings(js_State *J){
   //raylib bindings
-  js_newcsetglobal(J, jsB_InitWindow, "InitWindow", 3);
-
+  //js_newcsetglobal(J, jsB_InitWindow, "InitWindow", 3);
   js_newcsetglobal(J, jsB_SetWindowSize, "SetWindowSize", 2);
-
   js_newcsetglobal(J, jsB_GetScreenWidth, "GetScreenWidth", 0);
-
   js_newcsetglobal(J, jsB_GetScreenHeight, "GetScreenHeight", 0);
-
   js_newcsetglobal(J, jsB_SetWindowTitle, "SetWindowTitle", 1);
-
   js_newcsetglobal(J, jsB_IsWindowFullscreen, "IsWindowFullscreen", 0);
 
   js_newcsetglobal(J, jsB_ClearBackground, "ClearBackground", 1);
@@ -130,16 +115,15 @@ JSBDEF void jsB_initbindings(js_State *J){
   js_newcsetglobal(J, jsB_DrawText, "DrawText", 4);
 
   js_newcsetglobal(J, jsB_SetTargetFPS, "SetTargetFPS", 1);
-
   js_newcsetglobal(J, jsB_GetFrameTime, "GetFrameTime", 0);
-
   js_newcsetglobal(J, jsB_GetTime, "GetTime", 0);
-
   js_newcsetglobal(J, jsB_GetFps, "GetFPS", 0);
 
   js_newcsetglobal(J, jsB_IsKeyPressed, "IsKeyPressed", 1);
-
+  js_newcsetglobal(J, jsB_IsKeyDown, "IsKeyDown", 1);
+  js_newcfunction(J, jsB_IsKeyReleased, "IsKeyReleased", 1);
   js_newcsetglobal(J, jsB_GetKeyPressed, "GetKeyPressed", 0);
+  js_newcsetglobal(J, jsB_SetExitKey, "SetExitKey", 1);
 
   js_newcsetglobal(J, jsB_DrawLine, "DrawLine", 5);
   js_newcsetglobal(J, jsB_DrawRectangle, "DrawRectangle", 5);
@@ -256,12 +240,23 @@ JSBDEF void jsB_IsKeyPressed(js_State *J){
 JSBDEF void jsB_GetKeyPressed(js_State *J){
   js_pushnumber(J, GetKeyPressed());
 }
-    bool IsKeyPressedRepeat(int key);                       // Check if a key has been pressed again
-    bool IsKeyDown(int key);                                // Check if a key is being pressed
-    bool IsKeyReleased(int key);                            // Check if a key has been released once
-    bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
-        int GetCharPressed(void);                               // Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
-    void SetExitKey(int key);                               // Set a custom key to exit program (default is ESC)
+
+JSBDEF void jsB_IsKeyDown(js_State *J){
+  js_pushboolean(J, IsKeyDown(js_tointeger(J, 1)));                                // Check if a key is being pressed
+}
+
+JSBDEF void jsB_IsKeyReleased(js_State *J){
+  js_pushboolean(J, IsKeyReleased(js_tointeger(J, 1)));                            // Check if a key has been released once
+}
+
+JSBDEF void jsB_SetExitKey(js_State *J){
+  SetExitKey(js_tointeger(J, 1));                               // Set a custom key to exit program (default is ESC)
+}
+
+
+    //bool IsKeyPressedRepeat(int key);                       // Check if a key has been pressed again
+    //bool IsKeyUp(int key);                                  // Check if a key is NOT being pressed
+    //int GetCharPressed(void);                               // Get char pressed (unicode), call it multiple times for chars queued, returns 0 when the queue is empty
 
 JSBDEF void jsB_DrawLine(js_State *J){
   int i = 1;
@@ -381,10 +376,47 @@ static const char *keyboardKey =
   "KEY_RIGHT_ALT       : 346,\n"      // Key: Alt right
   "KEY_RIGHT_SUPER     : 347,\n"      // Key: Super right
   "KEY_KB_MENU         : 348,\n"      // Key: KB menu
+  "KEY_KP_0            : 320,\n"      // Key: Keypad 0
+  "KEY_KP_1            : 321,\n"      // Key: Keypad 1
+  "KEY_KP_2            : 322,\n"      // Key: Keypad 2
+  "KEY_KP_3            : 323,\n"      // Key: Keypad 3
+  "KEY_KP_4            : 324,\n"      // Key: Keypad 4
+  "KEY_KP_5            : 325,\n"      // Key: Keypad 5
+  "KEY_KP_6            : 326,\n"      // Key: Keypad 6
+  "KEY_KP_7            : 327,\n"      // Key: Keypad 7
+  "KEY_KP_8            : 328,\n"      // Key: Keypad 8
+  "KEY_KP_9            : 329,\n"      // Key: Keypad 9
+  "KEY_KP_DECIMAL      : 330,\n"      // Key: Keypad .
+  "KEY_KP_DIVIDE       : 331,\n"      // Key: Keypad /
+  "KEY_KP_MULTIPLY     : 332,\n"      // Key: Keypad *
+  "KEY_KP_SUBTRACT     : 333,\n"      // Key: Keypad -
+  "KEY_KP_ADD          : 334,\n"      // Key: Keypad +
+  "KEY_KP_ENTER        : 335,\n"      // Key: Keypad Enter
+  "KEY_KP_EQUAL        : 336,\n"      // Key: Keypad =
   "}\n"
 ;
 
 //original bindings
+static const char *require_js =
+	"function require(name) {\n"
+	"var cache = require.cache;\n"
+	"if (name in cache) return cache[name];\n"
+	"var exports = {};\n"
+	"cache[name] = exports;\n"
+	"Function('exports', read(name+'.js'))(exports);\n"
+	"return exports;\n"
+	"}\n"
+	"require.cache = Object.create(null);\n"
+;
+
+static const char *stacktrace_js =
+	"Error.prototype.toString = function() { return this.stack }\n"
+;
+
+static const char *console_js =
+	"var console = { log: print, debug: print, warn: print, error: print };"
+;
+
 JSBDEF void jsB_gc(js_State *J){
 	int report = js_toboolean(J, 1);
 	js_gc(J, report);
@@ -509,22 +541,4 @@ JSBDEF void jsB_repr(js_State *J){
 	js_repr(J, 1);
 }
 
-JSBDEF int eval_print(js_State *J, const char *source) {
-	if (js_ploadstring(J, "[stdin]", source)) {
-		fprintf(stderr, "%s\n", js_trystring(J, -1, "Error"));
-		js_pop(J, 1);
-		return 1;
-	}
-	js_pushundefined(J);
-	if (js_pcall(J, 0)) {
-		fprintf(stderr, "%s\n", js_trystring(J, -1, "Error"));
-		js_pop(J, 1);
-		return 1;
-	}
-	if (js_isdefined(J, -1)) {
-		printf("%s\n", js_tryrepr(J, -1, "can't convert to string"));
-	}
-	js_pop(J, 1);
-	return 0;
-}
 #endif

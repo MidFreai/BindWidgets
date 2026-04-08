@@ -29,6 +29,7 @@ int main(int argc, char **argv){
 
   while (!WindowShouldClose()){
     BeginDrawing();
+    ClearBackground((Color) {r:0, g:0, b:0, a:255});
 
     js_dostring(J, "loop();");
 
