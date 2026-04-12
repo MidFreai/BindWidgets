@@ -334,7 +334,7 @@ static const char *keyboardKey =
   "KEY_LEFT_BRACKET    : 91,\n"       // Key: [
   "KEY_BACKSLASH       : 92,\n"       // Key: '\'
   "KEY_RIGHT_BRACKET   : 93,\n"       // Key: ]
-  "KEY_GRAVE           : 96,\n"        // Key: `
+  "KEY_GRAVE           : 96,\n"       // Key: `
   "KEY_SPACE           : 32,\n"       // Key: Space
   "KEY_ESCAPE          : 256,\n"      // Key: Esc
   "KEY_ENTER           : 257,\n"      // Key: Enter

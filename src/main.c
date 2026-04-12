@@ -1,4 +1,3 @@
-#include <mujs.h>
 #include <stdio.h>
 #include <mujs.h>
 #include <raylib.h>
